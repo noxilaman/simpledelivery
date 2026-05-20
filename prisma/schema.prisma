@@ -70,6 +70,7 @@ model Shop {
   menus  Menu[]
   orders Order[]
   schedules ShopDaySchedule[]
+  members CustomerMember[]
 }
 
 model ShopDaySchedule {
@@ -111,6 +112,7 @@ model Menu {
 model Order {
   id              String        @id @default(cuid())
   shopId          String
+  memberId        String?
   orderCode       String        @unique
   trackingToken   String        @unique
   customerName    String
@@ -126,12 +128,37 @@ model Order {
   updatedAt       DateTime      @updatedAt
 
   shop       Shop             @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  member     CustomerMember?   @relation(fields: [memberId], references: [id], onDelete: SetNull)
   items      OrderItem[]
   payment    Payment?
   statusLogs OrderStatusLog[]
 
   @@index([shopId, createdAt])
+  @@index([memberId, createdAt])
   @@index([trackingToken])
+}
+
+model CustomerMember {
+  id              String   @id @default(cuid())
+  shopId          String
+  name            String
+  phone           String
+  passwordHash    String
+  deliveryAddress String   @db.Text
+  deliveryNote    String?  @db.Text
+  acceptedTermsAt DateTime
+  acceptedPdpaAt  DateTime
+  totalOrders     Int      @default(0)
+  totalSpent      Decimal  @default(0.00) @db.Decimal(10, 2)
+  lastOrderedAt   DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  shop   Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  orders Order[]
+
+  @@unique([shopId, phone])
+  @@index([shopId, updatedAt])
 }
 
 model OrderItem {

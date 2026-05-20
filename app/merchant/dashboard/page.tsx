@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ClipboardCheck, Clock, Flame, ReceiptText, Wallet } from "lucide-react";
+import { ClipboardCheck, Clock, Flame, Gift, ReceiptText, Users, Wallet } from "lucide-react";
 import { getCurrentMerchant } from "@/lib/auth";
 import { formatMoney, thaiDate } from "@/lib/format";
+import { calculateTotalMemberPoints } from "@/lib/members";
 import { prisma } from "@/lib/prisma";
 import { MerchantShell } from "@/components/merchant/MerchantShell";
 
@@ -15,7 +16,7 @@ export default async function MerchantDashboardPage() {
   const end = new Date(start);
   end.setDate(end.getDate() + 1);
 
-  const [orders, pendingSlips, cookingOrders, completedOrders, bestMenus] = await Promise.all([
+  const [orders, pendingSlips, cookingOrders, completedOrders, bestMenus, members] = await Promise.all([
     prisma.order.findMany({
       where: { shopId: merchant.shop.id, createdAt: { gte: start, lt: end } },
       include: { items: true },
@@ -26,12 +27,19 @@ export default async function MerchantDashboardPage() {
     prisma.order.count({ where: { shopId: merchant.shop.id, orderStatus: "cooking" } }),
     prisma.order.count({ where: { shopId: merchant.shop.id, orderStatus: "completed", createdAt: { gte: start, lt: end } } }),
     prisma.menu.findMany({ where: { shopId: merchant.shop.id }, orderBy: { soldQty: "desc" }, take: 5 }),
+    prisma.customerMember.findMany({
+      where: { shopId: merchant.shop.id },
+      select: { totalSpent: true },
+    }),
   ]);
 
   const salesToday = orders.filter((order) => order.paymentStatus === "verified" || order.orderStatus === "completed").reduce((sum, order) => sum + order.totalPrice.toNumber(), 0);
+  const totalMemberPoints = calculateTotalMemberPoints(members);
   const cards = [
     { label: "ออเดอร์วันนี้", value: orders.length, icon: ReceiptText },
     { label: "ยอดขายวันนี้", value: formatMoney(salesToday), icon: Wallet },
+    { label: "สมาชิกทั้งหมด", value: members.length, icon: Users },
+    { label: "แต้มสะสมรวม", value: totalMemberPoints, icon: Gift },
     { label: "รอตรวจสลิป", value: pendingSlips, icon: Clock },
     { label: "กำลังทำ", value: cookingOrders, icon: Flame },
     { label: "สำเร็จ", value: completedOrders, icon: ClipboardCheck },
@@ -39,7 +47,7 @@ export default async function MerchantDashboardPage() {
 
   return (
     <MerchantShell title={`แดชบอร์ด ${merchant.shop.name}`}>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-7">
         {cards.map((card) => {
           const Icon = card.icon;
           return (

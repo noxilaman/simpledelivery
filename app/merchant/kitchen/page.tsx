@@ -76,8 +76,8 @@ export default async function MerchantKitchenPage() {
 
               <div className="mt-4 flex flex-wrap gap-2">
                 <Link href={`/merchant/orders/${order.id}`} className="tap bg-white text-ink ring-1 ring-stone-200">ดูออเดอร์</Link>
-                <Link href={`/merchant/orders/${order.id}/print/delivery`} className="tap inline-flex items-center gap-2 bg-leaf text-white">
-                  <Printer size={18} /> ใบส่งของ
+                <Link href={`/merchant/orders/${order.id}/print/kitchen`} className="tap inline-flex items-center gap-2 bg-leaf text-white">
+                  <Printer size={18} /> ใบส่งในครัว
                 </Link>
                 <Link href={`/merchant/orders/${order.id}/print/receipt`} className="tap inline-flex items-center gap-2 bg-chili text-white">
                   <Printer size={18} /> ใบติดถุง

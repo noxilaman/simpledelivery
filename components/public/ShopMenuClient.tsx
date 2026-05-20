@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Minus, Plus, ShoppingCart, Share2 } from "lucide-react";
+import { Minus, Plus, ShoppingCart, Share2, UserCircle } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 
 type Shop = {
@@ -78,6 +78,9 @@ export function ShopMenuClient({ shop, menus, ordering }: { shop: Shop; menus: M
             </button>
           </div>
           <p className="mt-4 text-sm leading-6 text-white/85">{shop.address}</p>
+          <Link href={`/shop/${shop.slug}/member`} className="tap mt-4 inline-flex items-center gap-2 bg-white/15 px-3 text-white">
+            <UserCircle size={20} /> สมาชิก / แต้มสะสม
+          </Link>
         </div>
       </header>
 

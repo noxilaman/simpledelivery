@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 
 const cookieName = "merchant_token";
+const memberCookieName = "customer_member_token";
 
 function jwtSecret() {
   const secret = process.env.JWT_SECRET ?? "dev-secret-change-me";
@@ -73,4 +74,40 @@ export async function requireAdmin() {
 
 export async function clearMerchantSession() {
   (await cookies()).delete(cookieName);
+}
+
+export async function createCustomerMemberToken(memberId: string, shopId: string) {
+  return new SignJWT({ memberId, shopId, kind: "customer_member" })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("30d")
+    .sign(jwtSecret());
+}
+
+export async function setCustomerMemberSession(memberId: string, shopId: string) {
+  const token = await createCustomerMemberToken(memberId, shopId);
+  (await cookies()).set(memberCookieName, token, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 60 * 60 * 24 * 30,
+    path: "/",
+  });
+}
+
+export async function getCurrentCustomerMember(shopId: string) {
+  const token = (await cookies()).get(memberCookieName)?.value;
+  if (!token) return null;
+
+  try {
+    const { payload } = await jwtVerify(token, jwtSecret());
+    if (payload.kind !== "customer_member") return null;
+    if (payload.shopId !== shopId || typeof payload.memberId !== "string") return null;
+
+    return prisma.customerMember.findFirst({
+      where: { id: payload.memberId, shopId },
+    });
+  } catch {
+    return null;
+  }
 }

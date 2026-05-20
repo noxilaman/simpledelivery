@@ -3,7 +3,7 @@ import { CheckCircle2 } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 import { generatePromptPayQr } from "@/lib/promptpay";
 import { prisma } from "@/lib/prisma";
-import { DownloadQrButton, PaymentClient, QrImage } from "@/components/public/PaymentClient";
+import { DownloadQrButton, MemberSignupPrompt, PaymentClient, QrImage } from "@/components/public/PaymentClient";
 
 export default async function PaymentPage({ params }: { params: Promise<{ orderId: string }> }) {
   const { orderId } = await params;
@@ -41,6 +41,8 @@ export default async function PaymentPage({ params }: { params: Promise<{ orderI
           </div>
         ))}
       </section>
+
+      {!order.memberId && <MemberSignupPrompt shopSlug={order.shop.slug} orderId={order.id} />}
 
       <PaymentClient orderId={order.id} />
     </main>

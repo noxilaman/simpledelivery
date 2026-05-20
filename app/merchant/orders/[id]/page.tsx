@@ -74,6 +74,9 @@ export default async function MerchantOrderDetailPage({ params }: { params: Prom
           </section>
           <section className="panel space-y-3">
             <h2 className="font-bold">พิมพ์เอกสาร</h2>
+            <Link href={`/merchant/orders/${plain.id}/print/kitchen`} className="tap flex items-center justify-center gap-2 bg-white text-ink ring-1 ring-stone-200">
+              <Printer size={18} /> พิมพ์ใบส่งในครัว
+            </Link>
             <Link href={`/merchant/orders/${plain.id}/print/delivery`} className="tap flex items-center justify-center gap-2 bg-leaf text-white">
               <Printer size={18} /> พิมพ์ใบส่งของ
             </Link>

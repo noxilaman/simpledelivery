@@ -1,11 +1,20 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { Minus, Plus, Trash2 } from "lucide-react";
+import { LogIn, Minus, Plus, Trash2, UserCheck } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 
 type CartItem = { id: string; name: string; price: number; quantity: number; note?: string };
+type MemberProfile = {
+  name: string;
+  phone: string;
+  deliveryAddress: string;
+  deliveryNote?: string | null;
+  totalOrders: number;
+  totalSpent: number;
+};
 
 export function CheckoutClient() {
   const router = useRouter();
@@ -13,7 +22,17 @@ export function CheckoutClient() {
   const [items, setItems] = useState<CartItem[]>([]);
   const [deliveryFee, setDeliveryFee] = useState(0);
   const [deliveryNote, setDeliveryNote] = useState("");
+  const [member, setMember] = useState<MemberProfile | null>(null);
+  const [loginPhone, setLoginPhone] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [formValues, setFormValues] = useState({
+    customerName: "",
+    customerPhone: "",
+    deliveryAddress: "",
+    deliveryNote: "",
+  });
   const [loading, setLoading] = useState(false);
+  const [loginLoading, setLoginLoading] = useState(false);
   const subtotal = useMemo(() => items.reduce((sum, item) => sum + item.price * item.quantity, 0), [items]);
 
   useEffect(() => {
@@ -31,6 +50,16 @@ export function CheckoutClient() {
       })
       .catch(() => {
         setDeliveryFee(0);
+      });
+
+    fetch(`/api/members/me?shopSlug=${encodeURIComponent(parsed.shopSlug)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data.member) return;
+        applyMember(data.member);
+      })
+      .catch(() => {
+        setMember(null);
       });
   }, []);
 
@@ -58,6 +87,36 @@ export function CheckoutClient() {
     if (!res.ok) return alert(data.message ?? "สร้างออเดอร์ไม่สำเร็จ");
     localStorage.removeItem("simpleDeliveryCart");
     router.push(`/payment/${data.id}`);
+  }
+
+  function updateField(name: keyof typeof formValues, value: string) {
+    setFormValues((current) => ({ ...current, [name]: value }));
+  }
+
+  function applyMember(profile: MemberProfile) {
+    setMember(profile);
+    setFormValues({
+      customerName: profile.name,
+      customerPhone: profile.phone,
+      deliveryAddress: profile.deliveryAddress,
+      deliveryNote: profile.deliveryNote ?? "",
+    });
+  }
+
+  async function loginMember(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!shopSlug) return alert("ไม่พบข้อมูลร้านค้าในตะกร้า");
+    setLoginLoading(true);
+    const res = await fetch("/api/members/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ shopSlug, phone: loginPhone, password: loginPassword }),
+    });
+    const data = await res.json();
+    setLoginLoading(false);
+    if (!res.ok) return alert(data.message ?? "เข้าสู่ระบบสมาชิกไม่สำเร็จ");
+    applyMember(data.member);
+    setLoginPassword("");
   }
 
   return (
@@ -89,11 +148,39 @@ export function CheckoutClient() {
         ))}
       </div>
 
+      <section className="panel mt-5">
+        <div className="flex items-start gap-3">
+          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-leaf/10 text-leaf">
+            {member ? <UserCheck size={20} /> : <LogIn size={20} />}
+          </div>
+          <div className="min-w-0 flex-1">
+            <h2 className="font-bold">{member ? "สมาชิกของร้านนี้" : "มีบัญชีสมาชิกกับร้านนี้"}</h2>
+            {member ? (
+              <p className="mt-1 text-sm text-stone-600">
+                {member.name} • เคยสั่ง {member.totalOrders} ครั้ง • ยอดสะสม {formatMoney(member.totalSpent)}
+              </p>
+            ) : (
+              <p className="mt-1 text-sm text-stone-600">ล็อกอินเพื่อเติมข้อมูลจัดส่งอัตโนมัติ หรือสั่งต่อแบบ Guest ได้เลย</p>
+            )}
+          </div>
+        </div>
+
+        {!member && (
+          <form onSubmit={loginMember} className="mt-4 grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
+            <input value={loginPhone} onChange={(event) => setLoginPhone(event.target.value)} required className="field" placeholder="เบอร์โทรสมาชิก" />
+            <input value={loginPassword} onChange={(event) => setLoginPassword(event.target.value)} required type="password" className="field" placeholder="รหัสผ่าน" />
+            <button disabled={loginLoading} className="tap bg-leaf text-white">
+              {loginLoading ? "กำลังเข้า..." : "เข้าสู่ระบบ"}
+            </button>
+          </form>
+        )}
+      </section>
+
       <form action={submit} className="mt-5 space-y-3">
-        <input name="customerName" required className="field" placeholder="ชื่อลูกค้า" />
-        <input name="customerPhone" required className="field" placeholder="เบอร์โทร" />
-        <textarea name="deliveryAddress" required className="field min-h-28" placeholder="ที่อยู่จัดส่ง" />
-        <textarea name="deliveryNote" className="field min-h-24" placeholder="หมายเหตุการส่ง" />
+        <input name="customerName" value={formValues.customerName} onChange={(event) => updateField("customerName", event.target.value)} required className="field" placeholder="ชื่อลูกค้า" />
+        <input name="customerPhone" value={formValues.customerPhone} onChange={(event) => updateField("customerPhone", event.target.value)} required className="field" placeholder="เบอร์โทร" />
+        <textarea name="deliveryAddress" value={formValues.deliveryAddress} onChange={(event) => updateField("deliveryAddress", event.target.value)} required className="field min-h-28" placeholder="ที่อยู่จัดส่ง" />
+        <textarea name="deliveryNote" value={formValues.deliveryNote} onChange={(event) => updateField("deliveryNote", event.target.value)} className="field min-h-24" placeholder="หมายเหตุการส่ง" />
 
         <section className="panel space-y-2">
           <div className="flex justify-between"><span>ค่าอาหาร</span><strong>{formatMoney(subtotal)}</strong></div>

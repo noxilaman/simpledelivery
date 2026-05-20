@@ -1,6 +1,7 @@
 ﻿import { randomUUID } from "crypto";
 import { OrderStatus, PaymentStatus } from "@prisma/client";
 import { decimalToNumber, fail, handleApiError, ok } from "@/lib/api";
+import { getCurrentCustomerMember } from "@/lib/auth";
 import { createOrderCode, logOrderStatus } from "@/lib/orders";
 import { prisma } from "@/lib/prisma";
 import { todayDateOnly } from "@/lib/format";
@@ -13,6 +14,7 @@ export async function POST(request: Request) {
     const order = await prisma.$transaction(async (tx) => {
       const shop = await tx.shop.findFirst({ where: { slug: data.shopSlug, approvalStatus: "APPROVED" } });
       if (!shop || !shop.isOpen) throw new Error("à¸£à¹‰à¸²à¸™à¸›à¸´à¸”à¸£à¸±à¸šà¸­à¸­à¹€à¸”à¸­à¸£à¹Œà¸­à¸¢à¸¹à¹ˆ");
+      const member = await getCurrentCustomerMember(shop.id);
       const today = todayDateOnly();
       const schedule = await tx.shopDaySchedule.findUnique({
         where: { shopId_date: { shopId: shop.id, date: today } },
@@ -45,6 +47,7 @@ export async function POST(request: Request) {
       const created = await tx.order.create({
         data: {
           shopId: shop.id,
+          memberId: member?.id,
           orderCode: await createOrderCode(tx),
           trackingToken: randomUUID(),
           customerName: data.customerName,
@@ -85,6 +88,21 @@ export async function POST(request: Request) {
         });
       }
 
+      if (member) {
+        await tx.customerMember.update({
+          where: { id: member.id },
+          data: {
+            name: data.customerName,
+            phone: data.customerPhone,
+            deliveryAddress: data.deliveryAddress,
+            deliveryNote: data.deliveryNote,
+            totalOrders: { increment: 1 },
+            totalSpent: { increment: totalPrice },
+            lastOrderedAt: created.createdAt,
+          },
+        });
+      }
+
       await logOrderStatus(tx, created.id, null, OrderStatus.pending_payment, "à¸ªà¸£à¹‰à¸²à¸‡à¸­à¸­à¹€à¸”à¸­à¸£à¹Œ");
       return created;
     });
@@ -98,4 +116,3 @@ export async function POST(request: Request) {
 export async function GET() {
   return fail("à¹ƒà¸Šà¹‰ POST à¹€à¸žà¸·à¹ˆà¸­à¸ªà¸£à¹‰à¸²à¸‡à¸­à¸­à¹€à¸”à¸­à¸£à¹Œ", 405);
 }
-

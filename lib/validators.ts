@@ -75,3 +75,21 @@ export const orderSchema = z.object({
     )
     .min(1),
 });
+
+export const memberLoginSchema = z.object({
+  shopSlug: z.string().min(1),
+  phone: z.string().min(8),
+  password: z.string().min(1),
+});
+
+export const memberRegisterSchema = z.object({
+  shopSlug: z.string().min(1),
+  orderId: z.string().optional().nullable(),
+  name: z.string().min(2),
+  phone: z.string().min(8),
+  password: z.string().min(8),
+  deliveryAddress: z.string().min(5),
+  deliveryNote: z.string().optional().nullable(),
+  acceptedTerms: z.literal(true, { errorMap: () => ({ message: "กรุณายอมรับ Terms and Conditions" }) }),
+  acceptedPdpa: z.literal(true, { errorMap: () => ({ message: "กรุณายอมรับ PDPA" }) }),
+});

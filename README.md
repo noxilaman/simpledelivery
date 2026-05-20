@@ -71,8 +71,11 @@ npm run dev
 - `app/checkout` ตะกร้าและข้อมูลจัดส่ง
 - `app/payment/[orderId]` ชำระเงินและอัปโหลดสลิป
 - `app/order/track/[trackingToken]` ติดตามสถานะ
+- `app/shop/[slug]/member/register` สมัครสมาชิกของร้านหลังสั่งครั้งแรก พร้อมยอมรับ Terms และ PDPA
+- `app/shop/[slug]/member` หน้าสมาชิกของร้าน ดูแต้มสะสมและประวัติการซื้อ
 - `app/merchant/*` หน้าร้านค้า
-- `app/merchant/kitchen` รายการในครัว สรุปของที่ต้องทำ พร้อมปุ่มพิมพ์ใบส่งของและใบติดถุง
+- `app/merchant/kitchen` รายการในครัว สรุปของที่ต้องทำ พร้อมปุ่มพิมพ์ใบส่งในครัวและใบติดถุง
+- `app/merchant/members` ฝั่งร้านค้าดูจำนวนสมาชิก ยอดสะสม และแต้มรวม
 - `app/api/*` API routes ทั้ง public และ merchant
 - `prisma/schema.prisma` schema ฐานข้อมูล
 - `prisma/seed.ts` seed data ตัวอย่าง
