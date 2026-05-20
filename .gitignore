@@ -1,0 +1,8 @@
+node_modules
+.next
+.env
+public/uploads/*
+!public/uploads/.gitkeep
+!public/uploads/menus/.gitkeep
+!public/uploads/slips/.gitkeep
+!public/uploads/shops/.gitkeep
