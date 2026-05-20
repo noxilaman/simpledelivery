@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { Printer } from "lucide-react";
 import { decimalToNumber } from "@/lib/api";
 import { getCurrentMerchant } from "@/lib/auth";
 import { formatMoney, thaiDate } from "@/lib/format";
@@ -69,6 +71,15 @@ export default async function MerchantOrderDetailPage({ params }: { params: Prom
           <section className="panel">
             <h2 className="mb-3 font-bold">เปลี่ยนสถานะออเดอร์</h2>
             <StatusChanger orderId={plain.id} current={plain.orderStatus} />
+          </section>
+          <section className="panel space-y-3">
+            <h2 className="font-bold">พิมพ์เอกสาร</h2>
+            <Link href={`/merchant/orders/${plain.id}/print/delivery`} className="tap flex items-center justify-center gap-2 bg-leaf text-white">
+              <Printer size={18} /> พิมพ์ใบส่งของ
+            </Link>
+            <Link href={`/merchant/orders/${plain.id}/print/receipt`} className="tap flex items-center justify-center gap-2 bg-chili text-white">
+              <Printer size={18} /> พิมพ์ใบเสร็จ / ใบติดถุง
+            </Link>
           </section>
           {plain.payment && <PaymentReview paymentId={plain.payment.id} slipImageUrl={plain.payment.slipImageUrl} />}
         </div>

@@ -72,6 +72,7 @@ npm run dev
 - `app/payment/[orderId]` ชำระเงินและอัปโหลดสลิป
 - `app/order/track/[trackingToken]` ติดตามสถานะ
 - `app/merchant/*` หน้าร้านค้า
+- `app/merchant/kitchen` รายการในครัว สรุปของที่ต้องทำ พร้อมปุ่มพิมพ์ใบส่งของและใบติดถุง
 - `app/api/*` API routes ทั้ง public และ merchant
 - `prisma/schema.prisma` schema ฐานข้อมูล
 - `prisma/seed.ts` seed data ตัวอย่าง

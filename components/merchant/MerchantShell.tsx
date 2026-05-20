@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { BarChart3, CalendarDays, ClipboardList, Settings, Soup } from "lucide-react";
+import { BarChart3, CalendarDays, ClipboardList, CookingPot, Settings, Soup } from "lucide-react";
 import { LogoutButton } from "@/components/merchant/LogoutButton";
 
 const nav = [
   { href: "/merchant/dashboard", label: "แดชบอร์ด", icon: BarChart3 },
   { href: "/merchant/orders", label: "ออเดอร์", icon: ClipboardList },
+  { href: "/merchant/kitchen", label: "ครัว", icon: CookingPot },
   { href: "/merchant/menus", label: "เมนู", icon: Soup },
   { href: "/merchant/planner", label: "แผนขาย", icon: CalendarDays },
   { href: "/merchant/settings", label: "ตั้งค่า", icon: Settings },
@@ -20,7 +21,7 @@ export function MerchantShell({ children, title }: { children: React.ReactNode; 
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-5 py-5">{children}</main>
-      <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 border-t border-stone-200 bg-white md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-6 border-t border-stone-200 bg-white md:hidden">
         {nav.map((item) => {
           const Icon = item.icon;
           return (
