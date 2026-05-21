@@ -14,8 +14,11 @@ export default function HomePage() {
             เพิ่มเมนู แชร์ลิงก์ร้าน รับชำระเงินผ่าน PromptPay QR อัปโหลดสลิป และติดตามสถานะออเดอร์ได้ในที่เดียว
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Link href="/howtouse" className="tap inline-flex items-center justify-center gap-2 bg-leaf text-white">
-              <BookOpen size={18} /> วิธีใช้งาน <ArrowRight size={18} />
+            <Link href="/shops" className="tap inline-flex items-center justify-center gap-2 bg-leaf text-white">
+              <Store size={18} /> ร้านที่เปิดให้บริการ <ArrowRight size={18} />
+            </Link>
+            <Link href="/howtouse" className="tap inline-flex items-center justify-center gap-2 bg-white text-ink ring-1 ring-stone-200">
+              <BookOpen size={18} /> วิธีใช้งาน
             </Link>
             <Link href="/merchant/login" className="tap inline-flex items-center justify-center bg-white text-ink ring-1 ring-stone-200">
               เข้าสู่ระบบร้านค้า
