@@ -3,6 +3,8 @@ import { ArrowLeft, ArrowRight, MapPin, Phone, Store, Utensils } from "lucide-re
 import { todayDateOnly } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 export default async function PublicShopsPage() {
   const today = todayDateOnly();
   const shops = await prisma.shop.findMany({
