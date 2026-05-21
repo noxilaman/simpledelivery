@@ -4,15 +4,6 @@ import { dateInputToDateOnly, dateOnlyToInput, todayDateOnly } from "@/lib/forma
 import { prisma } from "@/lib/prisma";
 import { dayScheduleSchema, planMenuSchema } from "@/lib/validators";
 
-function uniqueCatalog(menus: Awaited<ReturnType<typeof prisma.menu.findMany>>) {
-  const map = new Map<string, (typeof menus)[number]>();
-  for (const menu of menus) {
-    const key = `${menu.name}|${menu.price.toString()}`;
-    if (!map.has(key)) map.set(key, menu);
-  }
-  return Array.from(map.values());
-}
-
 export async function GET(request: Request) {
   try {
     const merchant = await requireMerchant();
@@ -20,13 +11,13 @@ export async function GET(request: Request) {
     const date = url.searchParams.get("date") || dateOnlyToInput(todayDateOnly());
     const availableDate = dateInputToDateOnly(date);
 
-    const [plannedMenus, allMenus, schedule] = await Promise.all([
+    const [plannedMenus, catalog, schedule] = await Promise.all([
       prisma.menu.findMany({
-        where: { shopId: merchant.shop!.id, availableDate },
+        where: { shopId: merchant.shop!.id, availableDate, isTemplate: false },
         orderBy: { createdAt: "desc" },
       }),
       prisma.menu.findMany({
-        where: { shopId: merchant.shop!.id },
+        where: { shopId: merchant.shop!.id, isTemplate: true, isAvailable: true },
         orderBy: { createdAt: "desc" },
       }),
       prisma.shopDaySchedule.findUnique({
@@ -34,7 +25,7 @@ export async function GET(request: Request) {
       }),
     ]);
 
-    return ok(decimalToNumber({ date, plannedMenus, catalog: uniqueCatalog(allMenus), schedule }));
+    return ok(decimalToNumber({ date, plannedMenus, catalog, schedule }));
   } catch (error) {
     return handleApiError(error);
   }
@@ -47,7 +38,7 @@ export async function POST(request: Request) {
     const availableDate = dateInputToDateOnly(data.availableDate);
 
     const source = await prisma.menu.findFirst({
-      where: { id: data.sourceMenuId, shopId: merchant.shop!.id },
+      where: { id: data.sourceMenuId, shopId: merchant.shop!.id, isTemplate: true },
     });
     if (!source) throw new Error("ไม่พบเมนูต้นทาง");
 
@@ -56,6 +47,7 @@ export async function POST(request: Request) {
         shopId: merchant.shop!.id,
         name: source.name,
         availableDate,
+        isTemplate: false,
       },
     });
 
@@ -75,6 +67,7 @@ export async function POST(request: Request) {
       : await prisma.menu.create({
           data: {
             shopId: merchant.shop!.id,
+            isTemplate: false,
             name: source.name,
             availableDate,
             soldQty: 0,

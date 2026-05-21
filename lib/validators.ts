@@ -33,6 +33,14 @@ export const menuSchema = z.object({
   isAvailable: z.coerce.boolean().default(true),
 });
 
+export const menuCatalogSchema = z.object({
+  name: z.string().min(2),
+  description: z.string().min(1),
+  price: z.coerce.number().positive(),
+  imageUrl: z.string().optional().nullable(),
+  isAvailable: z.coerce.boolean().default(true),
+});
+
 export const planMenuSchema = z.object({
   sourceMenuId: z.string().min(1),
   availableDate: z

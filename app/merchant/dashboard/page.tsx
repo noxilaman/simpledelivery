@@ -25,7 +25,7 @@ export default async function MerchantDashboardPage() {
     prisma.order.count({ where: { shopId: merchant.shop.id, paymentStatus: "submitted" } }),
     prisma.order.count({ where: { shopId: merchant.shop.id, orderStatus: "cooking" } }),
     prisma.order.count({ where: { shopId: merchant.shop.id, orderStatus: "completed", createdAt: { gte: start, lt: end } } }),
-    prisma.menu.findMany({ where: { shopId: merchant.shop.id }, orderBy: { soldQty: "desc" }, take: 5 }),
+    prisma.menu.findMany({ where: { shopId: merchant.shop.id, isTemplate: false }, orderBy: { soldQty: "desc" }, take: 5 }),
     prisma.customerMember.count({ where: { shopId: merchant.shop.id } }),
     prisma.pointLedger.aggregate({ where: { shopId: merchant.shop.id }, _sum: { points: true } }),
   ]);

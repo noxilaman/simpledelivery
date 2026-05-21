@@ -10,9 +10,6 @@ type Menu = {
   description: string;
   price: number;
   imageUrl?: string | null;
-  availableDate: string;
-  stockQty: number;
-  soldQty: number;
   isAvailable: boolean;
 };
 
@@ -51,7 +48,7 @@ export function MenuManager({ menus }: { menus: Menu[] }) {
   }
 
   async function remove(id: string) {
-    if (!confirm("ลบเมนูนี้ใช่ไหม")) return;
+    if (!confirm("ลบเมนูต้นแบบนี้ใช่ไหม เมนูที่เคยถูกวางแผนขายไว้แล้วจะไม่หาย")) return;
     const res = await fetch(`/api/merchant/menus/${id}`, { method: "DELETE" });
     const data = await res.json();
     if (!res.ok) return alert(data.message);
@@ -61,12 +58,11 @@ export function MenuManager({ menus }: { menus: Menu[] }) {
   return (
     <div className="grid gap-5 lg:grid-cols-[380px_1fr]">
       <form action={create} className="panel h-fit space-y-3">
-        <h2 className="text-lg font-bold">เพิ่มเมนูวันนี้</h2>
+        <h2 className="text-lg font-bold">เพิ่มเมนูเข้าคลัง</h2>
+        <p className="text-sm text-stone-600">เมนูในหน้านี้ยังไม่เปิดขาย ลูกค้าจะเห็นเมนูเมื่อร้านนำไปวางแผนในหน้าแผนขายรายวัน</p>
         <input name="name" required className="field" placeholder="ชื่ออาหาร" />
         <textarea name="description" required className="field min-h-24" placeholder="รายละเอียดอาหาร" />
         <input name="price" type="number" required min="1" className="field" placeholder="ราคา" />
-        <input name="stockQty" type="number" required min="0" className="field" placeholder="จำนวนที่ขายได้ ใส่ 0 = ไม่จำกัด" />
-        <input name="availableDate" type="date" required className="field" defaultValue={new Date().toISOString().slice(0, 10)} />
         <input name="image" type="file" accept="image/png,image/jpeg,image/webp" className="field" />
         <button className="tap flex w-full items-center justify-center gap-2 bg-leaf text-white">
           <Plus size={20} /> เพิ่มเมนู
@@ -89,7 +85,7 @@ export function MenuManager({ menus }: { menus: Menu[] }) {
                   <h3 className="font-bold">{menu.name}</h3>
                   <p className="mt-1 text-sm text-stone-600">{menu.description}</p>
                   <p className="mt-2 font-bold text-chili">{formatMoney(menu.price)}</p>
-                  <p className="text-sm text-stone-500">{menu.stockQty === 0 ? "ขายไม่จำกัดจำนวน" : `เหลือ ${menu.stockQty}`} ขายแล้ว {menu.soldQty}</p>
+                  <p className="mt-1 text-sm text-stone-500">{menu.isAvailable ? "พร้อมให้เลือกในหน้าแผนขาย" : "ซ่อนไว้จากหน้าแผนขาย"}</p>
                 </div>
               </div>
               <div className="flex gap-2">
@@ -109,6 +105,7 @@ export function MenuManager({ menus }: { menus: Menu[] }) {
             </form>
           </article>
         ))}
+        {menus.length === 0 && <p className="panel text-stone-600">ยังไม่มีเมนูในคลัง เพิ่มเมนูแรกได้จากฟอร์มด้านซ้าย</p>}
       </div>
     </div>
   );

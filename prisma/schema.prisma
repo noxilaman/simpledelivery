@@ -105,6 +105,7 @@ model ShopDaySchedule {
 model Menu {
   id            String   @id @default(cuid())
   shopId        String
+  isTemplate    Boolean  @default(false)
   name          String
   description   String   @db.Text
   price         Decimal  @db.Decimal(10, 2)
@@ -119,6 +120,7 @@ model Menu {
   shop       Shop        @relation(fields: [shopId], references: [id], onDelete: Cascade)
   orderItems OrderItem[]
 
+  @@index([shopId, isTemplate])
   @@index([shopId, availableDate, isAvailable])
 }
 

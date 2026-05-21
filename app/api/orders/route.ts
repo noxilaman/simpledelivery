@@ -28,6 +28,7 @@ export async function POST(request: Request) {
           id: { in: menuIds },
           shopId: shop.id,
           availableDate: today,
+          isTemplate: false,
           isAvailable: true,
         },
       });

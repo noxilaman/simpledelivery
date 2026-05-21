@@ -20,6 +20,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ slu
       where: {
         shopId: shop.id,
         availableDate: today,
+        isTemplate: false,
         isAvailable: true,
       },
       orderBy: { createdAt: "desc" },

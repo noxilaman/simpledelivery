@@ -564,3 +564,88 @@ OS Update → สร้าง User → SSH Hardening → Fail2Ban
 → Clone GitHub → .env → npm ci → prisma migrate deploy → npm build
 → PM2 start → Nginx config → Certbot SSL → UFW Firewall
 ```
+# Addendum: Create Production Admin User
+
+ในการติดตั้ง Production แบบ clean **ไม่ควรรัน `npx prisma db seed`** เพราะ seed มี demo shop/demo menu สำหรับทดสอบระบบ ให้สร้าง admin user แรกหลังจากรัน migration แล้วแทน
+
+ให้รันคำสั่งนี้บน server ในโฟลเดอร์โปรเจกต์:
+
+```bash
+cd /var/www/simpledelivery
+```
+
+ตรวจสอบก่อนว่า migration และ Prisma Client พร้อมแล้ว:
+
+```bash
+npx prisma generate
+npx prisma migrate deploy
+```
+
+สร้าง admin user:
+
+```bash
+read -p "Admin email: " ADMIN_EMAIL
+read -s -p "Admin password: " ADMIN_PASSWORD
+echo
+
+ADMIN_EMAIL="$ADMIN_EMAIL" ADMIN_PASSWORD="$ADMIN_PASSWORD" node <<'NODE'
+const { PrismaClient } = require("@prisma/client");
+const bcrypt = require("bcryptjs");
+
+const prisma = new PrismaClient();
+
+async function main() {
+  const email = process.env.ADMIN_EMAIL;
+  const password = process.env.ADMIN_PASSWORD;
+
+  if (!email || !email.includes("@")) {
+    throw new Error("ADMIN_EMAIL is required and must be a valid email.");
+  }
+
+  if (!password || password.length < 12) {
+    throw new Error("ADMIN_PASSWORD must be at least 12 characters.");
+  }
+
+  const passwordHash = await bcrypt.hash(password, 12);
+
+  const admin = await prisma.user.upsert({
+    where: { email },
+    update: {
+      passwordHash,
+      role: "ADMIN",
+    },
+    create: {
+      email,
+      passwordHash,
+      role: "ADMIN",
+    },
+  });
+
+  console.log(`Admin user ready: ${admin.email}`);
+}
+
+main()
+  .catch((error) => {
+    console.error(error.message);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
+NODE
+```
+
+หลังสร้างเสร็จให้เข้าใช้งานที่:
+
+- Admin login: `https://yourdomain.com/admin/login`
+- Admin dashboard: `https://yourdomain.com/admin/dashboard`
+- จัดการร้านค้า/อนุมัติร้าน: `https://yourdomain.com/admin/shops`
+
+คำแนะนำด้านความปลอดภัย:
+
+- ใช้ password อย่างน้อย 12 ตัวอักษร และควรมีตัวพิมพ์ใหญ่/เล็ก/ตัวเลข/สัญลักษณ์
+- อย่าใช้ password ตัวอย่างจาก `prisma/seed.ts` ใน production
+- เมื่อมี admin หลายคน ให้สร้าง user แยกกัน ไม่แชร์บัญชีเดียว
+- หากต้อง reset password admin ให้รันคำสั่งเดิมด้วย email เดิม ระบบจะ update password ให้
+
+---

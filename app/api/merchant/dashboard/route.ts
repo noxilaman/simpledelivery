@@ -23,7 +23,7 @@ export async function GET() {
         where: { shopId: merchant.shop!.id, orderStatus: OrderStatus.completed, createdAt: { gte: start, lt: end } },
       }),
       prisma.menu.findMany({
-        where: { shopId: merchant.shop!.id },
+        where: { shopId: merchant.shop!.id, isTemplate: false },
         orderBy: { soldQty: "desc" },
         take: 5,
       }),
