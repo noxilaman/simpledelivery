@@ -22,6 +22,7 @@ export default async function ShopPage({ params }: { params: Promise<{ slug: str
     where: {
       shopId: shop.id,
       availableDate: today,
+      isTemplate: false,
       isAvailable: true,
     },
     orderBy: { createdAt: "desc" },

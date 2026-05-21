@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
-import { Minus, Plus, ShoppingCart, Share2, UserCircle } from "lucide-react";
+import { Minus, Plus, Share2, ShoppingCart, UserCircle } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 
 type Shop = {
@@ -66,8 +65,12 @@ export function ShopMenuClient({ shop, menus, ordering }: { shop: Shop; menus: M
       <header className="bg-leaf text-white">
         <div className="mx-auto max-w-3xl px-5 py-6">
           <div className="flex items-center gap-4">
-            <div className="relative h-16 w-16 overflow-hidden rounded-lg bg-white/15">
-              {shop.logoUrl ? <Image src={shop.logoUrl} alt={shop.name} fill className="object-cover" /> : <div className="flex h-full items-center justify-center text-2xl font-bold">{shop.name.slice(0, 1)}</div>}
+            <div className="h-16 w-16 overflow-hidden rounded-lg bg-white/15">
+              {shop.logoUrl ? (
+                <img src={shop.logoUrl} alt={shop.name} className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full items-center justify-center text-2xl font-bold">{shop.name.slice(0, 1)}</div>
+              )}
             </div>
             <div className="min-w-0 flex-1">
               <h1 className="text-2xl font-bold">{shop.name}</h1>
@@ -99,8 +102,12 @@ export function ShopMenuClient({ shop, menus, ordering }: { shop: Shop; menus: M
             const qty = cart.find((item) => item.id === menu.id)?.quantity ?? 0;
             return (
               <article key={menu.id} className="panel flex gap-3">
-                <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-lg bg-stone-100">
-                  {menu.imageUrl ? <Image src={menu.imageUrl} alt={menu.name} fill className="object-cover" /> : <div className="flex h-full items-center justify-center text-sm text-stone-400">ไม่มีรูป</div>}
+                <div className="h-28 w-28 shrink-0 overflow-hidden rounded-lg bg-stone-100">
+                  {menu.imageUrl ? (
+                    <img src={menu.imageUrl} alt={menu.name} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-sm text-stone-400">ไม่มีรูป</div>
+                  )}
                 </div>
                 <div className="min-w-0 flex-1">
                   <h3 className="font-bold">{menu.name}</h3>

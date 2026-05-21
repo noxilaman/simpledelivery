@@ -178,7 +178,7 @@ nano ~/upgrade.sh
 
 ```bash
 #!/bin/bash
-set -e
+set -euo pipefail
 
 APP_DIR="/var/www/simpledelivery"
 LOG="$HOME/upgrade_$(date +%Y%m%d_%H%M%S).log"
@@ -191,7 +191,8 @@ echo "[1/4] git pull..." | tee -a "$LOG"
 git pull origin main 2>&1 | tee -a "$LOG"
 
 echo "[2/4] npm ci..." | tee -a "$LOG"
-npm ci --omit=dev 2>&1 | tee -a "$LOG"
+# ต้องลง devDependencies ก่อน build เพราะ Next/Tailwind/TypeScript ใช้ตอน build
+npm ci 2>&1 | tee -a "$LOG"
 
 echo "[3/4] prisma generate + migrate..." | tee -a "$LOG"
 npx prisma generate 2>&1 | tee -a "$LOG"
@@ -199,7 +200,10 @@ npx prisma migrate deploy 2>&1 | tee -a "$LOG"
 
 echo "[4/4] build + restart..." | tee -a "$LOG"
 npm run build 2>&1 | tee -a "$LOG"
-pm2 restart simpledelivery 2>&1 | tee -a "$LOG"
+npm prune --omit=dev 2>&1 | tee -a "$LOG"
+pm2 restart simpledelivery --update-env 2>&1 | tee -a "$LOG"
+sleep 3
+pm2 describe simpledelivery 2>&1 | tee -a "$LOG"
 
 echo "=== Upgrade done: $(date) ===" | tee -a "$LOG"
 pm2 status
