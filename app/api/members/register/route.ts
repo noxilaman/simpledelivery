@@ -1,6 +1,7 @@
-import { Prisma } from "@prisma/client";
+import { PaymentStatus, Prisma } from "@prisma/client";
 import { decimalToNumber, fail, handleApiError, ok } from "@/lib/api";
 import { hashPassword, setCustomerMemberSession } from "@/lib/auth";
+import { awardCampaignPoints } from "@/lib/campaigns";
 import { prisma } from "@/lib/prisma";
 import { memberRegisterSchema } from "@/lib/validators";
 
@@ -40,6 +41,9 @@ export async function POST(request: Request) {
           where: { id: order.id },
           data: { memberId: created.id },
         });
+        if (order.paymentStatus === PaymentStatus.verified) {
+          await awardCampaignPoints(tx, order.id);
+        }
       }
 
       return created;

@@ -4,7 +4,7 @@ import { Gift, History, ShoppingBag } from "lucide-react";
 import { decimalToNumber } from "@/lib/api";
 import { getCurrentCustomerMember } from "@/lib/auth";
 import { formatMoney, thaiDate } from "@/lib/format";
-import { calculateMemberPoints } from "@/lib/members";
+import { sumPointLedgers } from "@/lib/members";
 import { prisma } from "@/lib/prisma";
 import { orderStatusLabels, statusTone } from "@/lib/status";
 import { MemberLoginClient } from "@/components/public/MemberLoginClient";
@@ -19,6 +19,7 @@ export default async function ShopMemberPage({ params }: { params: Promise<{ slu
     ? await prisma.customerMember.findUnique({
         where: { id: currentMember.id },
         include: {
+          pointLedgers: { orderBy: { createdAt: "desc" }, take: 20 },
           orders: {
             orderBy: { createdAt: "desc" },
             include: { items: true },
@@ -29,7 +30,7 @@ export default async function ShopMemberPage({ params }: { params: Promise<{ slu
     : null;
 
   const plain: any = member ? decimalToNumber(member) : null;
-  const points = plain ? calculateMemberPoints(Number(plain.totalSpent)) : 0;
+  const points = plain ? sumPointLedgers(plain.pointLedgers) : 0;
 
   return (
     <main className="mx-auto min-h-screen max-w-3xl bg-rice px-5 py-6">
@@ -37,7 +38,7 @@ export default async function ShopMemberPage({ params }: { params: Promise<{ slu
         <div>
           <p className="text-sm font-semibold text-leaf">{shop.name}</p>
           <h1 className="text-2xl font-bold">สมาชิกและแต้มสะสม</h1>
-          <p className="mt-2 text-sm text-stone-600">ทุกยอดใช้จ่าย 25 บาท ได้ 1 แต้ม</p>
+          <p className="mt-2 text-sm text-stone-600">แต้มมาจาก Campaign สมาชิกของร้าน</p>
         </div>
         <Link href={`/shop/${shop.slug}`} className="tap bg-white text-ink ring-1 ring-stone-200">กลับไปร้าน</Link>
       </div>
@@ -53,7 +54,7 @@ export default async function ShopMemberPage({ params }: { params: Promise<{ slu
                 <span className="text-sm font-semibold">แต้มสะสม</span>
               </div>
               <p className="mt-2 text-3xl font-bold">{points}</p>
-              <p className="mt-1 text-xs text-stone-500">จากยอด {formatMoney(plain.totalSpent)}</p>
+              <p className="mt-1 text-xs text-stone-500">จากแคมเปญที่เข้าเงื่อนไข</p>
             </div>
             <div className="panel">
               <div className="flex items-center gap-2 text-chili">
@@ -77,6 +78,19 @@ export default async function ShopMemberPage({ params }: { params: Promise<{ slu
             <p className="mt-1 text-sm text-stone-600">{plain.phone}</p>
             <p className="mt-3 whitespace-pre-wrap rounded-lg bg-stone-50 p-3 text-sm text-stone-700">{plain.deliveryAddress}</p>
             {plain.deliveryNote && <p className="mt-2 text-sm text-stone-600">หมายเหตุส่งประจำ: {plain.deliveryNote}</p>}
+          </section>
+
+          <section className="panel">
+            <h2 className="mb-3 font-bold">ประวัติแต้มล่าสุด</h2>
+            <div className="space-y-2">
+              {plain.pointLedgers.map((ledger: any) => (
+                <div key={ledger.id} className="flex items-center justify-between gap-3 rounded-lg bg-stone-50 p-3 text-sm">
+                  <span>{ledger.note ?? "แต้มสมาชิก"}</span>
+                  <strong className="text-leaf">+{ledger.points}</strong>
+                </div>
+              ))}
+              {plain.pointLedgers.length === 0 && <p className="text-sm text-stone-600">ยังไม่มีแต้มจาก Campaign</p>}
+            </div>
           </section>
 
           <section className="space-y-3">

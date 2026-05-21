@@ -37,6 +37,17 @@ enum OrderStatus {
   cancelled
 }
 
+enum CampaignConditionType {
+  NEW_CUSTOMER
+  MIN_PURCHASE
+  IN_PERIOD
+}
+
+enum CampaignRewardType {
+  FIXED_POINTS
+  POINT_MULTIPLIER
+}
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -49,28 +60,30 @@ model User {
 }
 
 model Shop {
-  id              String   @id @default(cuid())
-  ownerId         String   @unique
+  id              String             @id @default(cuid())
+  ownerId         String             @unique
   name            String
-  slug            String   @unique
+  slug            String             @unique
   phone           String
   promptpayId     String
   bankAccountName String
-  address         String   @db.Text
-  deliveryFee     Decimal  @default(20.00) @db.Decimal(10, 2)
-  deliveryNote    String?  @db.Text
+  address         String             @db.Text
+  deliveryFee     Decimal            @default(20.00) @db.Decimal(10, 2)
+  deliveryNote    String?            @db.Text
   logoUrl         String?
-  isOpen          Boolean  @default(true)
+  isOpen          Boolean            @default(true)
   approvalStatus  ShopApprovalStatus @default(PENDING)
   approvedAt      DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
 
-  owner  User    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  menus  Menu[]
-  orders Order[]
-  schedules ShopDaySchedule[]
-  members CustomerMember[]
+  owner        User              @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  menus        Menu[]
+  orders       Order[]
+  schedules    ShopDaySchedule[]
+  members      CustomerMember[]
+  campaigns    Campaign[]
+  pointLedgers PointLedger[]
 }
 
 model ShopDaySchedule {
@@ -127,11 +140,12 @@ model Order {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
-  shop       Shop             @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  member     CustomerMember?   @relation(fields: [memberId], references: [id], onDelete: SetNull)
-  items      OrderItem[]
-  payment    Payment?
-  statusLogs OrderStatusLog[]
+  shop         Shop             @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  member       CustomerMember?  @relation(fields: [memberId], references: [id], onDelete: SetNull)
+  items        OrderItem[]
+  payment      Payment?
+  statusLogs   OrderStatusLog[]
+  pointLedgers PointLedger[]
 
   @@index([shopId, createdAt])
   @@index([memberId, createdAt])
@@ -139,26 +153,71 @@ model Order {
 }
 
 model CustomerMember {
-  id              String   @id @default(cuid())
+  id              String    @id @default(cuid())
   shopId          String
   name            String
   phone           String
   passwordHash    String
-  deliveryAddress String   @db.Text
-  deliveryNote    String?  @db.Text
+  deliveryAddress String    @db.Text
+  deliveryNote    String?   @db.Text
   acceptedTermsAt DateTime
   acceptedPdpaAt  DateTime
-  totalOrders     Int      @default(0)
-  totalSpent      Decimal  @default(0.00) @db.Decimal(10, 2)
+  totalOrders     Int       @default(0)
+  totalSpent      Decimal   @default(0.00) @db.Decimal(10, 2)
   lastOrderedAt   DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-  shop   Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  orders Order[]
+  shop         Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  orders       Order[]
+  pointLedgers PointLedger[]
 
   @@unique([shopId, phone])
   @@index([shopId, updatedAt])
+}
+
+model Campaign {
+  id                String                @id @default(cuid())
+  shopId            String
+  name              String
+  description       String?               @db.Text
+  conditionType     CampaignConditionType
+  minPurchaseAmount Decimal?              @db.Decimal(10, 2)
+  rewardType        CampaignRewardType
+  rewardPoints      Int?
+  pointMultiplier   Decimal?              @db.Decimal(6, 2)
+  startsAt          DateTime
+  endsAt            DateTime
+  isActive          Boolean               @default(true)
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+
+  shop         Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  pointLedgers PointLedger[]
+
+  @@index([shopId, startsAt, endsAt, isActive])
+}
+
+model PointLedger {
+  id            String   @id @default(cuid())
+  shopId        String
+  campaignId    String?
+  orderId       String?
+  memberId      String?
+  customerName  String
+  customerPhone String
+  points        Int
+  note          String?  @db.Text
+  createdAt     DateTime @default(now())
+
+  shop     Shop            @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  campaign Campaign?       @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  order    Order?          @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  member   CustomerMember? @relation(fields: [memberId], references: [id], onDelete: SetNull)
+
+  @@unique([campaignId, orderId])
+  @@index([shopId, customerPhone, createdAt])
+  @@index([memberId, createdAt])
 }
 
 model OrderItem {

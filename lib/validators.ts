@@ -59,6 +59,21 @@ export const deliverySettingsSchema = z.object({
   deliveryNote: z.string().optional().nullable(),
 });
 
+export const campaignSchema = z.object({
+  name: z.string().min(2),
+  description: z.string().optional().nullable(),
+  conditionType: z.enum(["NEW_CUSTOMER", "MIN_PURCHASE", "IN_PERIOD"]),
+  minPurchaseAmount: z.coerce.number().min(0).optional().nullable(),
+  rewardType: z.enum(["FIXED_POINTS", "POINT_MULTIPLIER"]),
+  rewardPoints: z.coerce.number().int().min(0).optional().nullable(),
+  pointMultiplier: z.coerce.number().min(0).optional().nullable(),
+  startsAt: z.coerce.date(),
+  endsAt: z.coerce.date(),
+  isActive: z.coerce.boolean().default(true),
+});
+
+export const campaignUpdateSchema = campaignSchema.partial();
+
 export const orderSchema = z.object({
   shopSlug: z.string().min(1),
   customerName: z.string().min(2),

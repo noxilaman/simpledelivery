@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BarChart3, CalendarDays, ClipboardList, CookingPot, Settings, Soup, Users } from "lucide-react";
+import { BarChart3, CalendarDays, ClipboardList, CookingPot, Gift, Settings, Soup, Users } from "lucide-react";
 import { LogoutButton } from "@/components/merchant/LogoutButton";
 
 const nav = [
@@ -7,6 +7,7 @@ const nav = [
   { href: "/merchant/orders", label: "ออเดอร์", icon: ClipboardList },
   { href: "/merchant/kitchen", label: "ครัว", icon: CookingPot },
   { href: "/merchant/members", label: "สมาชิก", icon: Users },
+  { href: "/merchant/campaigns", label: "แคมเปญ", icon: Gift },
   { href: "/merchant/menus", label: "เมนู", icon: Soup },
   { href: "/merchant/planner", label: "แผนขาย", icon: CalendarDays },
   { href: "/merchant/settings", label: "ตั้งค่า", icon: Settings },
@@ -15,14 +16,14 @@ const nav = [
 export function MerchantShell({ children, title }: { children: React.ReactNode; title: string }) {
   return (
     <div className="min-h-screen bg-rice pb-24 md:pb-0">
-      <header className="border-b border-stone-200 bg-white">
+      <header className="border-b border-stone-200 bg-white md:pl-20">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-5 py-4">
           <h1 className="text-2xl font-bold">{title}</h1>
           <LogoutButton compact={false} />
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-5 py-5">{children}</main>
-      <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-7 border-t border-stone-200 bg-white md:hidden">
+      <main className="mx-auto max-w-6xl px-5 py-5 md:pl-24">{children}</main>
+      <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-4 border-t border-stone-200 bg-white sm:grid-cols-8 md:hidden">
         {nav.map((item) => {
           const Icon = item.icon;
           return (

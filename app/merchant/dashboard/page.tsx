@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { ClipboardCheck, Clock, Flame, Gift, ReceiptText, Users, Wallet } from "lucide-react";
 import { getCurrentMerchant } from "@/lib/auth";
 import { formatMoney, thaiDate } from "@/lib/format";
-import { calculateTotalMemberPoints } from "@/lib/members";
 import { prisma } from "@/lib/prisma";
 import { MerchantShell } from "@/components/merchant/MerchantShell";
 
@@ -16,7 +15,7 @@ export default async function MerchantDashboardPage() {
   const end = new Date(start);
   end.setDate(end.getDate() + 1);
 
-  const [orders, pendingSlips, cookingOrders, completedOrders, bestMenus, members] = await Promise.all([
+  const [orders, pendingSlips, cookingOrders, completedOrders, bestMenus, memberCount, pointSummary] = await Promise.all([
     prisma.order.findMany({
       where: { shopId: merchant.shop.id, createdAt: { gte: start, lt: end } },
       include: { items: true },
@@ -27,18 +26,16 @@ export default async function MerchantDashboardPage() {
     prisma.order.count({ where: { shopId: merchant.shop.id, orderStatus: "cooking" } }),
     prisma.order.count({ where: { shopId: merchant.shop.id, orderStatus: "completed", createdAt: { gte: start, lt: end } } }),
     prisma.menu.findMany({ where: { shopId: merchant.shop.id }, orderBy: { soldQty: "desc" }, take: 5 }),
-    prisma.customerMember.findMany({
-      where: { shopId: merchant.shop.id },
-      select: { totalSpent: true },
-    }),
+    prisma.customerMember.count({ where: { shopId: merchant.shop.id } }),
+    prisma.pointLedger.aggregate({ where: { shopId: merchant.shop.id }, _sum: { points: true } }),
   ]);
 
   const salesToday = orders.filter((order) => order.paymentStatus === "verified" || order.orderStatus === "completed").reduce((sum, order) => sum + order.totalPrice.toNumber(), 0);
-  const totalMemberPoints = calculateTotalMemberPoints(members);
+  const totalMemberPoints = pointSummary._sum.points ?? 0;
   const cards = [
     { label: "ออเดอร์วันนี้", value: orders.length, icon: ReceiptText },
     { label: "ยอดขายวันนี้", value: formatMoney(salesToday), icon: Wallet },
-    { label: "สมาชิกทั้งหมด", value: members.length, icon: Users },
+    { label: "สมาชิกทั้งหมด", value: memberCount, icon: Users },
     { label: "แต้มสะสมรวม", value: totalMemberPoints, icon: Gift },
     { label: "รอตรวจสลิป", value: pendingSlips, icon: Clock },
     { label: "กำลังทำ", value: cookingOrders, icon: Flame },
@@ -71,7 +68,7 @@ export default async function MerchantDashboardPage() {
               <Link key={order.id} href={`/merchant/orders/${order.id}`} className="block rounded-lg border border-stone-200 p-3">
                 <div className="flex justify-between gap-3">
                   <strong>{order.orderCode}</strong>
-                  <span className="text-chili font-bold">{formatMoney(order.totalPrice.toNumber())}</span>
+                  <span className="font-bold text-chili">{formatMoney(order.totalPrice.toNumber())}</span>
                 </div>
                 <p className="mt-1 text-sm text-stone-600">{order.customerName} - {thaiDate(order.createdAt)}</p>
               </Link>

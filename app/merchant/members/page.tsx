@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { Gift, ShoppingBag, Users, Wallet } from "lucide-react";
 import { getCurrentMerchant } from "@/lib/auth";
 import { formatMoney, thaiDate } from "@/lib/format";
-import { calculateMemberPoints, calculateTotalMemberPoints } from "@/lib/members";
+import { sumPointLedgers } from "@/lib/members";
 import { prisma } from "@/lib/prisma";
 import { MerchantShell } from "@/components/merchant/MerchantShell";
 
@@ -12,6 +12,7 @@ export default async function MerchantMembersPage() {
 
   const members = await prisma.customerMember.findMany({
     where: { shopId: merchant.shop.id },
+    include: { pointLedgers: true },
     orderBy: [{ totalSpent: "desc" }, { updatedAt: "desc" }],
     take: 100,
   });
@@ -19,7 +20,7 @@ export default async function MerchantMembersPage() {
   const memberCount = members.length;
   const totalSpent = members.reduce((sum, member) => sum + member.totalSpent.toNumber(), 0);
   const totalOrders = members.reduce((sum, member) => sum + member.totalOrders, 0);
-  const totalPoints = calculateTotalMemberPoints(members);
+  const totalPoints = members.reduce((sum, member) => sum + sumPointLedgers(member.pointLedgers), 0);
   const cards = [
     { label: "สมาชิกทั้งหมด", value: memberCount, icon: Users },
     { label: "แต้มสะสมรวม", value: totalPoints, icon: Gift },
@@ -45,7 +46,7 @@ export default async function MerchantMembersPage() {
       <section className="panel mt-5">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h2 className="font-bold">รายชื่อสมาชิก</h2>
-          <p className="text-sm text-stone-500">แต้มคิดจากทุก 25 บาท = 1 แต้ม</p>
+          <p className="text-sm text-stone-500">แต้มมาจาก Campaign ที่ร้านเปิดใช้งาน</p>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[760px] text-left text-sm">
@@ -68,7 +69,7 @@ export default async function MerchantMembersPage() {
                     <td className="py-3 pr-3 text-stone-600">{member.phone}</td>
                     <td className="py-3 pr-3 text-right">{member.totalOrders}</td>
                     <td className="py-3 pr-3 text-right font-semibold text-chili">{formatMoney(spent)}</td>
-                    <td className="py-3 pr-3 text-right font-bold text-leaf">{calculateMemberPoints(spent)}</td>
+                    <td className="py-3 pr-3 text-right font-bold text-leaf">{sumPointLedgers(member.pointLedgers)}</td>
                     <td className="py-3 text-right text-stone-600">{member.lastOrderedAt ? thaiDate(member.lastOrderedAt) : "-"}</td>
                   </tr>
                 );

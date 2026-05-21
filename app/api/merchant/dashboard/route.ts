@@ -1,7 +1,6 @@
 import { OrderStatus, PaymentStatus } from "@prisma/client";
 import { decimalToNumber, handleApiError, ok } from "@/lib/api";
 import { requireMerchant } from "@/lib/auth";
-import { calculateTotalMemberPoints } from "@/lib/members";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
@@ -12,7 +11,7 @@ export async function GET() {
     const end = new Date(start);
     end.setDate(end.getDate() + 1);
 
-    const [todayOrders, pendingSlips, cookingOrders, completedOrders, bestMenus, members] = await Promise.all([
+    const [todayOrders, pendingSlips, cookingOrders, completedOrders, bestMenus, memberCount, pointSummary] = await Promise.all([
       prisma.order.findMany({
         where: { shopId: merchant.shop!.id, createdAt: { gte: start, lt: end } },
         include: { items: true },
@@ -28,10 +27,8 @@ export async function GET() {
         orderBy: { soldQty: "desc" },
         take: 5,
       }),
-      prisma.customerMember.findMany({
-        where: { shopId: merchant.shop!.id },
-        select: { totalSpent: true },
-      }),
+      prisma.customerMember.count({ where: { shopId: merchant.shop!.id } }),
+      prisma.pointLedger.aggregate({ where: { shopId: merchant.shop!.id }, _sum: { points: true } }),
     ]);
 
     const salesToday = todayOrders
@@ -44,8 +41,8 @@ export async function GET() {
       pendingSlips,
       cookingOrders,
       completedOrders,
-      memberCount: members.length,
-      totalMemberPoints: calculateTotalMemberPoints(members),
+      memberCount,
+      totalMemberPoints: pointSummary._sum.points ?? 0,
       bestMenus,
       recentOrders: todayOrders.slice(0, 8),
     }));

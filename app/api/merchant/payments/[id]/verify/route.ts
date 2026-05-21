@@ -1,6 +1,7 @@
 import { OrderStatus, PaymentStatus } from "@prisma/client";
 import { decimalToNumber, handleApiError, ok } from "@/lib/api";
 import { requireMerchant } from "@/lib/auth";
+import { awardCampaignPoints } from "@/lib/campaigns";
 import { logOrderStatus } from "@/lib/orders";
 import { prisma } from "@/lib/prisma";
 
@@ -25,6 +26,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
         data: { paymentStatus: PaymentStatus.verified, orderStatus: OrderStatus.payment_verified },
       });
       await logOrderStatus(tx, current.orderId, current.order.orderStatus, OrderStatus.payment_verified, "ร้านยืนยันการชำระเงิน");
+      await awardCampaignPoints(tx, current.orderId);
       return updated;
     });
 

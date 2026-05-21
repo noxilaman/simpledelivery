@@ -1,6 +1,5 @@
 import { decimalToNumber, fail, handleApiError, ok } from "@/lib/api";
 import { getCurrentCustomerMember } from "@/lib/auth";
-import { calculateMemberPoints } from "@/lib/members";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(request: Request) {
@@ -14,6 +13,10 @@ export async function GET(request: Request) {
 
     const member = await getCurrentCustomerMember(shop.id);
     if (!member) return ok({ member: null });
+    const points = await prisma.pointLedger.aggregate({
+      where: { memberId: member.id },
+      _sum: { points: true },
+    });
 
     return ok(decimalToNumber({
       member: {
@@ -24,7 +27,7 @@ export async function GET(request: Request) {
         deliveryNote: member.deliveryNote,
         totalOrders: member.totalOrders,
         totalSpent: member.totalSpent,
-        points: calculateMemberPoints(member.totalSpent.toNumber()),
+        points: points._sum.points ?? 0,
       },
     }));
   } catch (error) {
