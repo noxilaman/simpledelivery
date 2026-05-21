@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Store } from "lucide-react";
+import { ArrowRight, BookOpen, Store } from "lucide-react";
 
 export default function HomePage() {
   return (
@@ -11,11 +11,11 @@ export default function HomePage() {
           </div>
           <h1 className="text-4xl font-bold leading-tight text-ink md:text-6xl">ระบบรับออเดอร์อาหารสำหรับร้านไม่มีหน้าร้าน</h1>
           <p className="mt-5 text-lg leading-8 text-stone-700">
-            เพิ่มเมนูวันนี้ แชร์ลิงก์ร้าน รับชำระเงินผ่าน PromptPay QR และติดตามสถานะออเดอร์ได้ในที่เดียว
+            เพิ่มเมนู แชร์ลิงก์ร้าน รับชำระเงินผ่าน PromptPay QR อัปโหลดสลิป และติดตามสถานะออเดอร์ได้ในที่เดียว
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Link href="/shop/krua-mae-manee" className="tap inline-flex items-center justify-center gap-2 bg-leaf text-white">
-              ดูร้านตัวอย่าง <ArrowRight size={18} />
+            <Link href="/howtouse" className="tap inline-flex items-center justify-center gap-2 bg-leaf text-white">
+              <BookOpen size={18} /> วิธีใช้งาน <ArrowRight size={18} />
             </Link>
             <Link href="/merchant/login" className="tap inline-flex items-center justify-center bg-white text-ink ring-1 ring-stone-200">
               เข้าสู่ระบบร้านค้า
